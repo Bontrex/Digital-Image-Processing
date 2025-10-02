@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator DFT dan IDFT Modern</title>
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 2em; background-color: #f8f9fa; color: #343a40; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        h2, h3, h4 { color: #0056b3; border-bottom: 1px solid #e9ecef; padding-bottom: 10px; }
+        
+        /* --- New, More Visible Tab Styling --- */
+        .main-tab-container {
+            display: flex;
+            border-bottom: 2px solid #dee2e6; /* Solid line for the entire bar */
+            margin-bottom: 25px;
+        }
+        .main-tab-link {
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent; /* Placeholder for the active indicator */
+            outline: none; cursor: pointer; padding: 14px 20px;
+            transition: all 0.25s ease-in-out;
+            font-size: 18px;
+            font-weight: 600;
+            color: #6c757d; /* Muted color for inactive tabs */
+            margin-bottom: -2px; /* Aligns the bottom border with the container's border */
+        }
+        .main-tab-link:hover {
+            color: #0056b3; /* Darken text color on hover */
+            border-bottom-color: #adb5bd; /* Show a hint of the indicator on hover */
+        }
+        .main-tab-link.active {
+            color: #007bff; /* Bright primary color for active tab text */
+            border-bottom-color: #007bff; /* Bright primary color for the indicator */
+        }
+
+        .nested-tab-container {
+            display: flex;
+            border-bottom: 1px solid #ced4da;
+            margin-bottom: 20px;
+        }
+        .nested-tab-link {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            outline: none; cursor: pointer; padding: 12px 16px;
+            transition: all 0.25s ease-in-out;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: -1px;
+        }
+        .nested-tab-link:hover {
+            color: #343a40;
+            border-bottom-color: #6c757d;
+        }
+        .nested-tab-link.active {
+            color: #495057;
+            font-weight: 600;
+            border-bottom-color: #495057;
+        }
+        
+        /* --- General Styling (Unchanged) --- */
+        .main-tab-content, .nested-tab-content { display: none; animation: fadeIn 0.5s; }
+        .main-tab-content.active, .nested-tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        input, select, textarea { padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ced4da; border-radius: 4px; width: calc(100% - 22px); transition: border-color 0.2s; }
+        textarea { height: 80px; font-family: 'Courier New', monospace; }
+        button { padding: 10px 20px; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 10px 5px 10px 0; font-size: 15px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.85; }
+        .btn-calc { background-color: #28a745; }
+        .btn-copy { background-color: #007bff; }
+        .btn-copy-idft { background-color: #17a2b8; }
+        .btn-random { background-color: #ffc107; color: #212529; }
+        .output-final { margin-top: 15px; padding: 15px; border-left: 5px solid #28a745; background-color: #e9f7ef; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', Courier, monospace; font-size: 16px; border-radius: 4px; }
+        .steps-container { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; }
+        .matrix-input { display: grid; gap: 8px; margin: 15px 0; }
+        .matrix-input input { width: 60px; text-align: center; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Kalkulator Transformasi Fourier Diskrit (DFT & IDFT)</h2>
+
+    <!-- MAIN TABS -->
+    <div class="main-tab-container">
+        <button class="main-tab-link active" id="dft-main-tab-btn" onclick="openMainTab(event, 'dft-calculator')">Kalkulator DFT</button>
+        <button class="main-tab-link" id="idft-main-tab-btn" onclick="openMainTab(event, 'idft-calculator')">Kalkulator IDFT</button>
+    </div>
+
+    <!-- DFT CALCULATOR CONTENT -->
+    <div id="dft-calculator" class="main-tab-content active">
+        <h3>DFT: Spasial &rarr; Frekuensi</h3>
+        <div class="nested-tab-container">
+            <button class="nested-tab-link dft active" id="dft-1d-nested-btn" onclick="openNestedTab(event, 'dft-1d', 'dft')">1 Dimensi</button>
+            <button class="nested-tab-link dft" id="dft-2d-nested-btn" onclick="openNestedTab(event, 'dft-2d', 'dft')">2 Dimensi</button>
+        </div>
+        <div id="dft-1d" class="nested-tab-content dft active">
+            <!-- DFT 1D Content Here -->
+            <p>Rumus: $$F(u) = \sum_{x=0}^{M-1} f(x)e^{-i\frac{2\pi ux}{M}}$$</p>
+            <label><b>Masukkan nilai f(x) (pisahkan dengan koma):</b></label>
+            <input type="text" id="dft-input-1d" placeholder="Contoh: 8, 4, 8, 4" value="8, 4, 8, 4">
+            <button class="btn-calc" onclick="calculateDFT1D()">Hitung DFT 1D</button>
+            <h4>Hasil F(u):</h4>
+            <div id="dft-output-1d" class="output-final"></div>
+            <button class="btn-copy" onclick="copyToClipboard('dft-output-1d')">Salin Hasil</button>
+            <button class="btn-copy-idft" onclick="copyForIDFT('1d')">Salin & Pindah ke IDFT</button>
+            <div id="dft-steps-1d" class="steps-container"></div>
+        </div>
+        <div id="dft-2d" class="nested-tab-content dft">
+            <!-- DFT 2D Content Here -->
+            <p>Rumus: $$F(u, v) = \sum_{x=0}^{M-1} \sum_{y=0}^{N-1} f(x, y) e^{-i2\pi (\frac{ux}{M} + \frac{vy}{N})}$$</p>
+            <label><b>Pilih Ukuran Matriks:</b></label>
+            <select id="dft-matrix-size" onchange="createMatrix('dft')"><option value="2">2x2</option><option value="4" selected>4x4</option></select>
+            <button class="btn-random" onclick="fillRandom('dft')">Isi Angka Acak</button>
+            <div id="dft-matrix-container"></div>
+            <button class="btn-calc" onclick="calculateDFT2D()">Hitung DFT 2D</button>
+            <h4>Hasil F(u,v):</h4>
+            <div id="dft-output-2d" class="output-final"></div>
+            <button class="btn-copy" onclick="copyToClipboard('dft-output-2d')">Salin Hasil</button>
+            <button class="btn-copy-idft" onclick="copyForIDFT('2d')">Salin & Pindah ke IDFT</button>
+            <div id="dft-steps-2d" class="steps-container"></div>
+        </div>
+    </div>
+
+    <!-- IDFT CALCULATOR CONTENT -->
+    <div id="idft-calculator" class="main-tab-content">
+        <h3>IDFT: Frekuensi &rarr; Spasial</h3>
+        <div class="nested-tab-container">
+            <button class="nested-tab-link idft active" id="idft-1d-nested-btn" onclick="openNestedTab(event, 'idft-1d', 'idft')">1 Dimensi</button>
+            <button class="nested-tab-link idft" id="idft-2d-nested-btn" onclick="openNestedTab(event, 'idft-2d', 'idft')">2 Dimensi</button>
+        </div>
+        <div id="idft-1d" class="nested-tab-content idft active">
+            <!-- IDFT 1D Content Here -->
+            <p>Rumus: $$f(x) = \frac{1}{M} \sum_{u=0}^{M-1} F(u) e^{i\frac{2\pi ux}{M}}$$</p>
+            <label><b>Masukkan nilai F(u) (format a+bi, dipisah koma):</b></label>
+            <textarea id="idft-input-1d" placeholder="Contoh: 24+0i, 0+0i, 8+0i, 0+0i"></textarea>
+            <button class="btn-calc" onclick="calculateIDFT1D()">Hitung IDFT 1D</button>
+            <h4>Hasil f(x):</h4>
+            <div id="idft-output-1d" class="output-final"></div>
+            <div id="idft-steps-1d" class="steps-container"></div>
+        </div>
+        <div id="idft-2d" class="nested-tab-content idft">
+            <!-- IDFT 2D Content Here -->
+            <p>Rumus: $$f(x, y) = \frac{1}{MN} \sum_{u=0}^{M-1} \sum_{v=0}^{N-1} F(u, v) e^{i2\pi (\frac{ux}{M} + \frac{vy}{N})}$$</p>
+            <label><b>Masukkan nilai F(u,v) (format (a+bi, ...); (...), ...):</b></label>
+            <textarea id="idft-input-2d" placeholder="Contoh: (10-4i, -2+2i); (-2+2i, 2-0i)"></textarea>
+            <button class="btn-calc" onclick="calculateIDFT2D()">Hitung IDFT 2D</button>
+             <h4>Hasil f(x,y):</h4>
+            <div id="idft-output-2d" class="output-final"></div>
+            <div id="idft-steps-2d" class="steps-container"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- SCRIPT LENGKAP DARI LANGKAH SEBELUMNYA ADA DI SINI ---
+// --- TIDAK ADA PERUBAHAN PADA BAGIAN JAVASCRIPT ---
+// --- State Variables ---
+let dftMatrixSize = 0, isDftMatrixCreated = false;
+let dft1DResult = [], dft2DResult = [];
+
+// --- UI Logic ---
+function openMainTab(evt, tabName) {
+    document.querySelectorAll(".main-tab-content").forEach(c => c.style.display = "none");
+    document.querySelectorAll(".main-tab-link").forEach(l => l.classList.remove("active"));
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
+
+function openNestedTab(evt, tabName, prefix) {
+    document.querySelectorAll(`.nested-tab-content.${prefix}`).forEach(c => c.style.display = "none");
+    document.querySelectorAll(`.nested-tab-link.${prefix}`).forEach(l => l.classList.remove("active"));
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+    if (tabName === 'dft-2d' && !isDftMatrixCreated) { createMatrix('dft'); }
+}
+
+async function typeset(elementId) {
+    if (window.MathJax) {
+        await MathJax.typesetPromise([document.getElementById(elementId)]);
+    }
+}
+
+// --- DFT Calculation Logic ---
+async function calculateDFT1D() {
+    const f_x = document.getElementById('dft-input-1d').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+    if (f_x.length === 0) { alert("Input tidak valid."); return; }
+    const M = f_x.length;
+    dft1DResult = [];
+    let stepsHtml = '<h4>Langkah-langkah Perhitungan DFT 1D:</h4>';
+    for (let u = 0; u < M; u++) {
+        let real = 0, imag = 0;
+        stepsHtml += `<h4>\\( F(${u}) \\)</h4> $$ F(${u}) = \\sum_{x=0}^{${M-1}} f(x) e^{-i\\frac{2\\pi ux}{${M}}} $$`;
+        let terms = [];
+        for (let x = 0; x < M; x++) {
+            const angle = 2 * Math.PI * u * x / M;
+            real += f_x[x] * Math.cos(angle);
+            imag -= f_x[x] * Math.sin(angle);
+            terms.push(` ${f_x[x]} \\left[ ${Math.cos(angle).toFixed(3)} - i \\cdot ${Math.sin(angle).toFixed(3)} \\right] `);
+        }
+        stepsHtml += `$$ F(${u}) = ${terms.join('+')} $$ $$ F(${u}) = ${real.toFixed(4)} ${imag < 0 ? '-' : '+'} i \\cdot ${Math.abs(imag).toFixed(4)} $$ <hr>`;
+        dft1DResult.push({ real, imag });
+    }
+    document.getElementById('dft-output-1d').textContent = dft1DResult.map(c => `${c.real.toFixed(4)} ${c.imag.toFixed(4) >= 0 ? '+' : '-'} ${Math.abs(c.imag).toFixed(4)}i`).join('\n');
+    document.getElementById('dft-steps-1d').innerHTML = stepsHtml;
+    await typeset('dft-steps-1d');
+}
+
+function createMatrix(prefix) {
+    const size = parseInt(document.getElementById(`${prefix}-matrix-size`).value);
+    dftMatrixSize = size;
+    const container = document.getElementById(`${prefix}-matrix-container`);
+    container.innerHTML = '';
+    container.style.gridTemplateColumns = `repeat(${size}, auto)`;
+    container.classList.add('matrix-input');
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `${prefix}-matrix-cell-${i}-${j}`;
+            input.placeholder = `f(${i},${j})`;
+            container.appendChild(input);
+        }
+    }
+    isDftMatrixCreated = true;
+}
+
+function fillRandom(prefix) {
+    if (!isDftMatrixCreated) createMatrix(prefix);
+    for (let i = 0; i < dftMatrixSize; i++) {
+        for (let j = 0; j < dftMatrixSize; j++) {
+            document.getElementById(`${prefix}-matrix-cell-${i}-${j}`).value = Math.floor(Math.random() * 10);
+        }
+    }
+}
+
+async function calculateDFT2D() {
+    if (!isDftMatrixCreated) { alert("Buat matriks dahulu."); return; }
+    const f_xy = Array.from({ length: dftMatrixSize }, (_, i) => 
+        Array.from({ length: dftMatrixSize }, (_, j) => {
+            const val = parseFloat(document.getElementById(`dft-matrix-cell-${i}-${j}`).value);
+            if (isNaN(val)) throw new Error(`Nilai pada f(${i},${j}) tidak valid.`);
+            return val;
+        })
+    );
+    const M = N = dftMatrixSize;
+    dft2DResult = [];
+    let stepsHtml = '<h4>Langkah-langkah Perhitungan DFT 2D:</h4>';
+    for (let u = 0; u < M; u++) {
+        const rowResult = [];
+        for (let v = 0; v < N; v++) {
+            let real = 0, imag = 0;
+            stepsHtml += `<h4>\\( F(${u}, ${v}) \\)</h4> $$ F(${u},${v}) = \\sum_{x=0}^{${M-1}}\\sum_{y=0}^{${N-1}} f(x,y) e^{-i2\\pi (\\frac{${u}x}{${M}} + \\frac{${v}y}{${N}})} $$`;
+            let terms = [];
+            for (let x = 0; x < M; x++) {
+                for (let y = 0; y < N; y++) {
+                    const angle = 2 * Math.PI * ((u * x / M) + (v * y / N));
+                    real += f_xy[x][y] * Math.cos(angle);
+                    imag -= f_xy[x][y] * Math.sin(angle);
+                    terms.push(`${f_xy[x][y]}e^{-i2\\pi (\\frac{${u*x}}{${M}} + \\frac{${v*y}}{${N}})}`);
+                }
+            }
+            stepsHtml += `$$ F(${u},${v}) \\approx ${terms[0]} + ... $$ $$ F(${u},${v}) = ${real.toFixed(4)} ${imag < 0 ? '-' : '+'} i \\cdot ${Math.abs(imag).toFixed(4)} $$ <hr>`;
+            rowResult.push({ real, imag });
+        }
+        dft2DResult.push(rowResult);
+    }
+    let outputString = dft2DResult.map(row => row.map(c => `(${c.real.toFixed(4)} ${c.imag >= 0 ? '+' : '-'} ${Math.abs(c.imag).toFixed(4)}i)`).join('\t')).join('\n');
+    document.getElementById('dft-output-2d').textContent = outputString;
+    document.getElementById('dft-steps-2d').innerHTML = stepsHtml;
+    await typeset('dft-steps-2d');
+}
+
+// --- IDFT Calculation Logic ---
+function parseComplex(s) { s = s.trim(); const iPos = s.lastIndexOf('i'); if (iPos === -1) return { real: parseFloat(s), imag: 0 }; const opPos = Math.max(s.lastIndexOf('+', iPos - 1), s.lastIndexOf('-', iPos - 1)); if (opPos <= 0) { return { real: 0, imag: parseFloat(s.substring(0, iPos) || '1') }; } return { real: parseFloat(s.substring(0, opPos)), imag: parseFloat(s.substring(opPos, iPos).replace('+', '') || '1') }; }
+async function calculateIDFT1D() { const F_u_str = document.getElementById('idft-input-1d').value.split(','); const F_u = F_u_str.map(parseComplex); if (F_u.some(c => isNaN(c.real) || isNaN(c.imag))) { alert("Format input IDFT 1D tidak valid."); return; } const M = F_u.length; let f_x = []; let stepsHtml = '<h4>Langkah-langkah Perhitungan IDFT 1D:</h4>'; for (let x = 0; x < M; x++) { let realSum = 0, imagSum = 0; stepsHtml += `<h4>\\( f(${x}) \\)</h4> $$ f(${x}) = \\frac{1}{${M}} \\sum_{u=0}^{${M-1}} F(u) e^{i\\frac{2\\pi ux}{${M}}} $$`; let terms = []; for (let u = 0; u < M; u++) { const angle = 2 * Math.PI * u * x / M; const cos_val = Math.cos(angle), sin_val = Math.sin(angle); realSum += F_u[u].real * cos_val - F_u[u].imag * sin_val; imagSum += F_u[u].real * sin_val + F_u[u].imag * cos_val; terms.push(`(${F_u[u].real.toFixed(2)}${F_u[u].imag<0?'-':'+'}i${Math.abs(F_u[u].imag).toFixed(2)})e^{i\\frac{2\\pi(${u})(${x})}{${M}}}`); } f_x.push(realSum / M); stepsHtml += `$$ f(${x}) = \\frac{1}{${M}} \\left[ ${terms.join(' + ')} \\right] $$ $$ f(${x}) = \\frac{${realSum.toFixed(4)}}{${M}} \\approx ${f_x[x].toFixed(4)} $$ <hr>`; } document.getElementById('idft-output-1d').textContent = f_x.map(val => val.toFixed(4)).join(', '); document.getElementById('idft-steps-1d').innerHTML = stepsHtml; await typeset('idft-steps-1d'); }
+async function calculateIDFT2D() { const F_uv_str = document.getElementById('idft-input-2d').value.replace(/[()]/g, '').split(';'); const F_uv = F_uv_str.map(row => row.split(',').map(parseComplex)); if (F_uv.some(row => row.some(c => isNaN(c.real) || isNaN(c.imag))) || F_uv.length === 0) { alert("Format input IDFT 2D tidak valid."); return; } const M = F_uv.length, N = F_uv[0].length; let f_xy = []; let stepsHtml = '<h4>Langkah-langkah Perhitungan IDFT 2D:</h4>'; for (let x = 0; x < M; x++) { const rowResult = []; for (let y = 0; y < N; y++) { let realSum = 0; stepsHtml += `<h4>\\( f(${x}, ${y}) \\)</h4>`; for (let u = 0; u < M; u++) { for (let v = 0; v < N; v++) { const angle = 2 * Math.PI * ((u * x / M) + (v * y / N)); const cos_val = Math.cos(angle), sin_val = Math.sin(angle); realSum += F_uv[u][v].real * cos_val - F_uv[u][v].imag * sin_val; } } const finalVal = realSum / (M * N); rowResult.push(finalVal); stepsHtml += `$$ f(${x},${y}) = \\frac{1}{${M*N}} \\sum_{u=0}^{${M-1}}\\sum_{v=0}^{${N-1}} F(u,v)e^{...} = \\frac{${realSum.toFixed(2)}}{${M*N}} \\approx ${finalVal.toFixed(4)} $$ <hr>`; } f_xy.push(rowResult); } document.getElementById('idft-output-2d').textContent = f_xy.map(row => row.map(val => val.toFixed(4)).join('\t')).join('\n'); document.getElementById('idft-steps-2d').innerHTML = stepsHtml; await typeset('idft-steps-2d'); }
+
+// --- Utility Functions ---
+function copyToClipboard(elementId) {
+    navigator.clipboard.writeText(document.getElementById(elementId).textContent).then(() => alert('Hasil berhasil disalin!'));
+}
+
+function copyForIDFT(type) {
+    let textToCopy = '';
+    if (type === '1d') {
+        if (dft1DResult.length === 0) { alert('Hitung DFT dahulu!'); return; }
+        textToCopy = dft1DResult.map(c => `${c.real.toFixed(6)}${c.imag >= 0 ? '+' : ''}${c.imag.toFixed(6)}i`).join(', ');
+    } else if (type === '2d') {
+        if (dft2DResult.length === 0) { alert('Hitung DFT dahulu!'); return; }
+        textToCopy = dft2DResult.map(row => '(' + row.map(c => `${c.real.toFixed(6)}${c.imag >= 0 ? '+' : ''}${c.imag.toFixed(6)}i`).join(', ') + ')').join('; ');
+    }
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        document.getElementById('idft-main-tab-btn').click();
+        if (type === '1d') {
+            document.getElementById('idft-input-1d').value = textToCopy;
+            document.getElementById('idft-1d-nested-btn').click();
+        } else if (type === '2d') {
+            document.getElementById('idft-input-2d').value = textToCopy;
+            document.getElementById('idft-2d-nested-btn').click();
+        }
+        alert('Hasil disalin & ditempelkan ke tab Kalkulator IDFT!');
+    }).catch(err => console.error('Gagal menyalin: ', err));
+}
+
+// Initial setup
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelector(".main-tab-link").click();
+    document.querySelector(".nested-tab-link.dft").click();
+    document.querySelector(".nested-tab-link.idft").click();
+    createMatrix('dft');
+});
+</script>
+
+</body>
+</html>
